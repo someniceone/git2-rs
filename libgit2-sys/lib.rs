@@ -3414,6 +3414,13 @@ extern "C" {
         width: size_t,
     ) -> c_int;
     pub fn git_diff_status_char(status: git_delta_t) -> c_char;
+    pub fn git_diff_index_to_tree(
+        diff: *mut *mut git_diff,
+        repo: *mut git_repository,
+        new_tree: *mut git_tree,
+        index: *mut git_index,
+        opts: *const git_diff_options,
+    ) -> c_int;
     pub fn git_diff_tree_to_index(
         diff: *mut *mut git_diff,
         repo: *mut git_repository,
@@ -3858,6 +3865,13 @@ extern "C" {
         out: *mut *mut git_index,
         repo: *mut git_repository,
         preimage: *mut git_tree,
+        diff: *mut git_diff,
+        options: *const git_apply_options,
+    ) -> c_int;
+    pub fn git_apply_to_index(
+        out: *mut *mut git_index,
+        repo: *mut git_repository,
+        preimage: *mut git_index,
         diff: *mut git_diff,
         options: *const git_apply_options,
     ) -> c_int;

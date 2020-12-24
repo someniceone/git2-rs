@@ -2465,6 +2465,35 @@ impl Repository {
         }
     }
 
+    /// Create a diff between repository index and a tree.
+    ///
+    /// The tree you pass will be used for the "new_file" side of the delta, and
+    /// the index will be used for the "old_file" side of the delta.
+    ///
+    /// If you pass `None` for the index, then the existing index of the `repo`
+    /// will be used.  In this case, the index will be refreshed from disk
+    /// (if it has changed) before the diff is generated.
+    ///
+    /// If the tree is `None`, then it is considered an empty tree.
+    pub fn diff_index_to_tree(
+        &self,
+        new_tree: Option<&Tree<'_>>,
+        index: Option<&Index>,
+        opts: Option<&mut DiffOptions>,
+    ) -> Result<Diff<'_>, Error> {
+        let mut ret = ptr::null_mut();
+        unsafe {
+            try_call!(raw::git_diff_index_to_tree(
+                &mut ret,
+                self.raw(),
+                new_tree.map(|s| s.raw()),
+                index.map(|s| s.raw()),
+                opts.map(|s| s.raw())
+            ));
+            Ok(Binding::from_raw(ret))
+        }
+    }
+
     /// Create a diff between two index objects.
     ///
     /// The first index will be used for the "old_file" side of the delta, and
@@ -2781,6 +2810,48 @@ impl Repository {
                 refname
             ));
             Ok(buf)
+        }
+    }
+
+    /// Apply a `git_diff` to a `git_tree`, and return the resulting image as an index.
+    pub fn apply_to_tree(
+        &self,
+        tree: &Tree<'_>,
+        diff: &Diff<'_>,
+        options: Option<&mut ApplyOptions<'_>>,
+    ) -> Result<Index, Error> {
+        let mut ret = ptr::null_mut();
+        unsafe {
+            try_call!(raw::git_apply_to_tree(
+                &mut ret,
+                self.raw(),
+                tree.raw(),
+                diff.raw(),
+                options.map(|s| s.raw()).unwrap_or(ptr::null())
+            ));
+
+            Ok(Binding::from_raw(ret))
+        }
+    }
+
+    /// Apply a `git_diff` to a `git_index`, and return the resulting image as an index.
+    pub fn apply_to_index(
+        &self,
+        index: &Index,
+        diff: &Diff<'_>,
+        options: Option<&mut ApplyOptions<'_>>,
+    ) -> Result<Index, Error> {
+        let mut ret = ptr::null_mut();
+        unsafe {
+            try_call!(raw::git_apply_to_index(
+                &mut ret,
+                self.raw(),
+                index.raw(),
+                diff.raw(),
+                options.map(|s| s.raw()).unwrap_or(ptr::null())
+            ));
+
+            Ok(Binding::from_raw(ret))
         }
     }
 

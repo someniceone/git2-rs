@@ -1052,8 +1052,9 @@ pub enum FileMode {
 }
 
 impl FileMode {
+    /// Convert u32 to FileMode
     #[cfg(target_os = "windows")]
-    fn from(mode: i32) -> Self {
+    pub fn from(mode: i32) -> Self {
         match mode {
             raw::GIT_FILEMODE_UNREADABLE => FileMode::Unreadable,
             raw::GIT_FILEMODE_TREE => FileMode::Tree,
@@ -1065,8 +1066,9 @@ impl FileMode {
         }
     }
 
+    /// Convert u32 to FileMode
     #[cfg(not(target_os = "windows"))]
-    fn from(mode: u32) -> Self {
+    pub fn from(mode: u32) -> Self {
         match mode {
             raw::GIT_FILEMODE_UNREADABLE => FileMode::Unreadable,
             raw::GIT_FILEMODE_TREE => FileMode::Tree,
