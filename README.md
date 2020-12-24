@@ -66,4 +66,3 @@ dual licensed as above, without any additional terms or conditions.
 
 [pre-commit-hook]: https://gist.github.com/glfmn/0c5e9e2b41b48007ed3497d11e3dbbfa
 
-branch rbb
