@@ -58,6 +58,7 @@ pub enum git_config {}
 pub enum git_config_iterator {}
 pub enum git_index {}
 pub enum git_index_conflict_iterator {}
+pub enum git_merge_conflicts {}
 pub enum git_object {}
 pub enum git_reference {}
 pub enum git_reference_iterator {}
@@ -3116,6 +3117,14 @@ extern "C" {
     ) -> c_int;
     pub fn git_merge_commits(
         out: *mut *mut git_index,
+        repo: *mut git_repository,
+        our_commit: *const git_commit,
+        their_commit: *const git_commit,
+        opts: *const git_merge_options,
+    ) -> c_int;
+    pub fn git_merge_commits_out_conflicts(
+        out: *mut *mut git_index,
+        conflicts_out: *mut *mut git_merge_conflicts,
         repo: *mut git_repository,
         our_commit: *const git_commit,
         their_commit: *const git_commit,

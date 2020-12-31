@@ -690,6 +690,7 @@ mod time;
 mod tree;
 mod treebuilder;
 mod worktree;
+mod conflict;
 
 fn init() {
     static INIT: Once = Once::new();

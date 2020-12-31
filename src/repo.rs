@@ -33,6 +33,7 @@ use crate::{Blob, BlobWriter, Branch, BranchType, Branches, Commit, Config, Inde
 use crate::{Describe, IntoCString, Reflog, RepositoryInitMode, RevparseMode};
 use crate::{DescribeOptions, Diff, DiffOptions, Odb, PackBuilder, TreeBuilder};
 use crate::{Note, Notes, ObjectType, Revwalk, Status, StatusOptions, Statuses, Tag};
+use crate::conflict::Conflicts;
 
 /// An owned git repository, representing all state associated with the
 /// underlying filesystem.
@@ -1938,6 +1939,31 @@ impl Repository {
                 opts.map(|o| o.raw())
             ));
             Ok(Binding::from_raw(raw))
+        }
+    }
+
+    /// Merge two commits, producing an index that reflects the result of
+    /// the merge. The index may be written as-is to the working directory or
+    /// checked out. If the index is to be converted to a tree, the caller
+    /// should resolve any conflicts that arose as part of the merge.
+    pub fn merge_commits_out_conflicts(
+        &self,
+        our_commit: &Commit<'_>,
+        their_commit: &Commit<'_>,
+        opts: Option<&MergeOptions>,
+    ) -> Result<(Index,Conflicts), Error> {
+        let mut raw = ptr::null_mut();
+        let mut conflicts = ptr::null_mut();
+        unsafe {
+            try_call!(raw::git_merge_commits_out_conflicts(
+                &mut raw,
+                &mut conflicts,
+                self.raw,
+                our_commit.raw(),
+                their_commit.raw(),
+                opts.map(|o| o.raw())
+            ));
+            Ok((Binding::from_raw(raw), Binding::from_raw(conflicts)))
         }
     }
 
