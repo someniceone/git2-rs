@@ -3170,7 +3170,7 @@ mod tests {
     use crate::{CherrypickOptions, FileMode, MergeFileInput};
     use crate::{ObjectType, Oid, Repository, ResetType};
     use std::convert::TryInto;
-    use std::ffi::OsStr;
+    use std::ffi::{OsStr};
     use std::fs;
     use std::io::Write;
     use std::path::Path;
@@ -3616,6 +3616,171 @@ mod tests {
             conflict_count += 1;
         }
         assert_eq!(conflict_count, 1, "There should be one conflict!");
+    }
+
+    /// merge files then return the result and conflicts
+    #[test]
+    fn smoke_merge_1file_out_conflicts() {
+        let (_temp_dir, repo) = graph_repo_init();
+        let sig = repo.signature().unwrap();
+
+        // let oid1 = head
+        let oid1 = repo.head().unwrap().target().unwrap();
+        let commit1 = repo.find_commit(oid1).unwrap();
+        println!("created oid1 {:?}", oid1);
+
+        repo.branch("branch_a", &commit1, true).unwrap();
+        repo.branch("branch_b", &commit1, true).unwrap();
+
+        let file_on_branch_a_content_1 = "111\n222\n333\n";
+        let file_on_branch_a_content_2 = "bbb\nccc\nxxx\nyyy\nzzz";
+        let file_on_branch_b_content_1 = "aaa\nbbb\nccc\n";
+        let file_on_branch_b_content_2 = "ooo\nppp\nqqq\nkkk";
+        let merge_file_result_content = "<<<<<<< file_a\n111\n222\n333\nbbb\nccc\nxxx\nyyy\nzzz\n=======\naaa\nbbb\nccc\nooo\nppp\nqqq\nkkk\n>>>>>>> file_a\n";
+
+        // create commit oid2 on branchA
+        let mut index = repo.index().unwrap();
+        let p = Path::new(repo.workdir().unwrap()).join("file_a");
+        println!("using path {:?}", p);
+        let mut file_a = fs::File::create(&p).unwrap();
+        file_a
+            .write_all(file_on_branch_a_content_1.as_bytes())
+            .unwrap();
+        drop(file_a);
+        index.add_path(Path::new("file_a")).unwrap();
+        let id_a = index.write_tree().unwrap();
+        let tree_a = repo.find_tree(id_a).unwrap();
+        let oid2 = repo
+            .commit(
+                Some("refs/heads/branch_a"),
+                &sig,
+                &sig,
+                "commit 2",
+                &tree_a,
+                &[&commit1],
+            )
+            .unwrap();
+        let commit2 = repo.find_commit(oid2).unwrap();
+        println!("created oid2 {:?}", oid2);
+
+        t!(repo.reset(commit1.as_object(), ResetType::Hard, None));
+
+        // create commit oid3 on branchB
+        let mut index = repo.index().unwrap();
+        let p = Path::new(repo.workdir().unwrap()).join("file_a");
+        let mut file_a = fs::File::create(&p).unwrap();
+        file_a
+            .write_all(file_on_branch_b_content_1.as_bytes())
+            .unwrap();
+        drop(file_a);
+        index.add_path(Path::new("file_a")).unwrap();
+        let id_b = index.write_tree().unwrap();
+        let tree_b = repo.find_tree(id_b).unwrap();
+        let oid3 = repo
+            .commit(
+                Some("refs/heads/branch_b"),
+                &sig,
+                &sig,
+                "commit 3",
+                &tree_b,
+                &[&commit1],
+            )
+            .unwrap();
+        let commit3 = repo.find_commit(oid3).unwrap();
+        println!("created oid3 {:?}", oid3);
+
+        t!(repo.reset(commit2.as_object(), ResetType::Hard, None));
+
+        // create commit oid4 on branchA
+        let mut index = repo.index().unwrap();
+        let p = Path::new(repo.workdir().unwrap()).join("file_a");
+        let mut file_a = fs::OpenOptions::new().append(true).open(&p).unwrap();
+        file_a.write(file_on_branch_a_content_2.as_bytes()).unwrap();
+        drop(file_a);
+        index.add_path(Path::new("file_a")).unwrap();
+        let id_a_2 = index.write_tree().unwrap();
+        let tree_a_2 = repo.find_tree(id_a_2).unwrap();
+        let oid4 = repo
+            .commit(
+                Some("refs/heads/branch_a"),
+                &sig,
+                &sig,
+                "commit 4",
+                &tree_a_2,
+                &[&commit2],
+            )
+            .unwrap();
+        let commit4 = repo.find_commit(oid4).unwrap();
+        println!("created oid4 {:?}", oid4);
+
+        t!(repo.reset(commit3.as_object(), ResetType::Hard, None));
+
+        // create commit oid5 on branchB
+        let mut index = repo.index().unwrap();
+        let p = Path::new(repo.workdir().unwrap()).join("file_a");
+        let mut file_a = fs::OpenOptions::new().append(true).open(&p).unwrap();
+        file_a.write(file_on_branch_b_content_2.as_bytes()).unwrap();
+        drop(file_a);
+        index.add_path(Path::new("file_a")).unwrap();
+        let id_b_2 = index.write_tree().unwrap();
+        let tree_b_2 = repo.find_tree(id_b_2).unwrap();
+        let oid5 = repo
+            .commit(
+                Some("refs/heads/branch_b"),
+                &sig,
+                &sig,
+                "commit 5",
+                &tree_b_2,
+                &[&commit3],
+            )
+            .unwrap();
+        let commit5 = repo.find_commit(oid5).unwrap();
+        println!("created oid5 {:?}", oid5);
+
+        // create merge commit oid4 on branchA with parents oid2 and oid3
+        //let mut index4 = repo.merge_commits(&commit2, &commit3, None).unwrap();
+        repo.set_head("refs/heads/branch_a").unwrap();
+        repo.checkout_head(None).unwrap();
+
+        let result = repo.merge_commits_out_conflicts(&commit4, &commit5, None).unwrap();
+        // let index = result.0;
+        let conflicts = result.1;
+        assert_eq!(conflicts.len(),1);
+        let ret = conflicts.get(0);
+        assert!(ret.is_some());
+        let merge_diff =ret.unwrap();
+        println!("ts:{},os:{},type:{}", merge_diff.their_status, merge_diff.our_status, merge_diff.dtype);
+
+
+        let merge_result = merge_diff.merge_result;
+        assert!(!merge_result.automergeable());
+        unsafe {
+            let path= merge_result.path().unwrap();
+            let result_content =String::from_utf8(merge_result.content().expect("get merge result content failed")).expect("parse string failed");
+            println!("path:{}\ncontent:{}", path, result_content);
+            assert_eq!(path,"file_a");
+            assert_eq!(result_content, merge_file_result_content);
+        }
+
+
+        let ancestor = merge_diff.ancestor_entry;
+        let their =merge_diff.their_entry;
+        let our = merge_diff.our_entry;
+
+        assert!(ancestor.is_none());
+        assert!(our.is_some());
+        assert!(their.is_some());
+
+        let our_path=String::from_utf8(our.unwrap().path).unwrap();
+        let their_path = String::from_utf8(their.unwrap().path).unwrap();
+
+        println!("our_path:{}",our_path);
+        println!("their_path:{}",their_path);
+
+        assert_eq!(our_path,"file_a");
+        assert_eq!(their_path,"file_a");
+
+        drop(conflicts);
     }
 
     /// create the following:

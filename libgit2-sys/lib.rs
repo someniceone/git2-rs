@@ -782,6 +782,36 @@ pub struct git_index_entry {
     pub path: *const c_char,
 }
 
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct git_merge_diff {
+    pub dtype: git_merge_diff_t,
+    pub ancestor_entry: git_index_entry,
+    pub our_entry: git_index_entry,
+    pub our_status: git_delta_t,
+    pub their_entry: git_index_entry,
+    pub their_status: git_delta_t,
+    pub merge_result: git_merge_file_result,
+}
+
+git_enum! {
+    pub enum git_merge_diff_t {
+	GIT_MERGE_DIFF_NONE = 0,
+	GIT_MERGE_DIFF_BOTH_MODIFIED = 1 << 0,
+	GIT_MERGE_DIFF_BOTH_ADDED = 1 << 1,
+	GIT_MERGE_DIFF_BOTH_DELETED = 1 << 2,
+	GIT_MERGE_DIFF_MODIFIED_DELETED = 1 << 3,
+	GIT_MERGE_DIFF_RENAMED_MODIFIED = 1 << 4,
+	GIT_MERGE_DIFF_RENAMED_DELETED = 1 << 5,
+	GIT_MERGE_DIFF_RENAMED_ADDED = 1 << 6,
+	GIT_MERGE_DIFF_BOTH_RENAMED = 1 << 7,
+	GIT_MERGE_DIFF_BOTH_RENAMED_1_TO_2 = 1 << 8,
+	GIT_MERGE_DIFF_BOTH_RENAMED_2_TO_1 = 1 << 9,
+	GIT_MERGE_DIFF_DIRECTORY_FILE = 1 << 10,
+	GIT_MERGE_DIFF_DF_CHILD = 1 << 11,
+    }
+}
+
 pub const GIT_INDEX_ENTRY_NAMEMASK: u16 = 0xfff;
 pub const GIT_INDEX_ENTRY_STAGEMASK: u16 = 0x3000;
 pub const GIT_INDEX_ENTRY_STAGESHIFT: u16 = 12;
@@ -3130,6 +3160,9 @@ extern "C" {
         their_commit: *const git_commit,
         opts: *const git_merge_options,
     ) -> c_int;
+    pub fn git_merge_diff_get_by_conflicts(conflicts: *mut git_merge_conflicts, n: size_t) -> *const git_merge_diff;
+    pub fn git_merge_conflicts_count(conflicts: *const git_merge_conflicts) -> size_t;
+    pub fn git_merge_conflicts_free(conflicts: *mut git_merge_conflicts);
     pub fn git_merge_trees(
         out: *mut *mut git_index,
         repo: *mut git_repository,
