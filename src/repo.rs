@@ -3743,14 +3743,13 @@ mod tests {
         repo.checkout_head(None).unwrap();
 
         let result = repo.merge_commits_out_conflicts(&commit4, &commit5, None).unwrap();
-        // let index = result.0;
+
         let conflicts = result.1;
         assert_eq!(conflicts.len(),1);
         let ret = conflicts.get(0);
         assert!(ret.is_some());
         let merge_diff =ret.unwrap();
         println!("ts:{},os:{},type:{}", merge_diff.their_status, merge_diff.our_status, merge_diff.dtype);
-
 
         let merge_result = merge_diff.merge_result;
         assert!(!merge_result.automergeable());
