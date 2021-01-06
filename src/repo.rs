@@ -3620,7 +3620,7 @@ mod tests {
 
     /// merge files then return the result and conflicts
     #[test]
-    fn smoke_merge_1file_out_conflicts() {
+    fn smoke_merge_file_out_conflicts() {
         let (_temp_dir, repo) = graph_repo_init();
         let sig = repo.signature().unwrap();
 
