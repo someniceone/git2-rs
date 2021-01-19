@@ -1399,6 +1399,9 @@ pub struct git_merge_file_input {
     /// File name of the conflicted file, or `NULL` to not merge the path.
     pub path: *const c_char,
     /// File mode of the conflicted file, or `0` to not merge the mode.
+    #[cfg(target_os = "windows")]
+    pub mode: c_int,
+    #[cfg(not(target_os = "windows"))]
     pub mode: c_uint,
 }
 
@@ -1414,6 +1417,9 @@ pub struct git_merge_file_result {
     pub path: *const c_char,
 
     /// The mode that the resultant merge file should use.
+    #[cfg(target_os = "windows")]
+    pub mode: c_int,
+    #[cfg(not(target_os = "windows"))]
     pub mode: c_uint,
 
     /// The contents of the merge.
