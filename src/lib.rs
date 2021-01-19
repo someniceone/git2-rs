@@ -653,6 +653,7 @@ mod buf;
 mod cherrypick;
 mod commit;
 mod config;
+mod conflict;
 mod cred;
 mod describe;
 mod diff;
@@ -690,7 +691,6 @@ mod time;
 mod tree;
 mod treebuilder;
 mod worktree;
-mod conflict;
 
 fn init() {
     static INIT: Once = Once::new();

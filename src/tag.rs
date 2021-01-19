@@ -188,17 +188,16 @@ mod tests {
         let obj = repo.find_object(id, None).unwrap();
         let sig = repo.signature().unwrap();
         let tag_id = repo.tag_lightweight("foo", &obj, false).unwrap();
-        let _ = repo.tag("bar",&obj,&sig,"msg",false);
+        let _ = repo.tag("bar", &obj, &sig, "msg", false);
 
         let tags = repo.tag_names(None).unwrap();
         assert_eq!(tags.len(), 2);
         assert_eq!(tags.get(1), Some("foo"));
 
-        let x=repo.find_object(tag_id, None)
-            .unwrap();
+        let x = repo.find_object(tag_id, None).unwrap();
 
-        println!("{}",x.kind().unwrap());
-        println!("{}",x.as_commit().unwrap().message().unwrap());
+        println!("{}", x.kind().unwrap());
+        println!("{}", x.as_commit().unwrap().message().unwrap());
         repo.tag_delete("foo").unwrap();
         let tags = repo.tag_names(None).unwrap();
         assert_eq!(tags.len(), 1);
