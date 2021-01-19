@@ -26,14 +26,12 @@ jobs:
             rust: stable
     steps:
     - uses: actions/checkout@master
-      with:
-        ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
     - name: Install Rust (rustup)
       run: rustup update ${{ matrix.rust }} --no-self-update && rustup default ${{ matrix.rust }}
       shell: bash
 #    - run: cargo test --no-default-features
     - run: cargo test
-    - run: cargo run --manifest-path systest/Cargo.toml
+#    - run: cargo run --manifest-path systest/Cargo.toml
     - run: cargo test --manifest-path git2-curl/Cargo.toml
 
   rustfmt:
@@ -44,4 +42,4 @@ jobs:
     - name: Install Rust
       run: rustup update stable && rustup default stable && rustup component add rustfmt
     - run: cargo fmt -- --check
-#1
+#
