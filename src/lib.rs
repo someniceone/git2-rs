@@ -1052,6 +1052,22 @@ pub enum FileMode {
     Commit,
 }
 
+#[cfg(target_os = "windows")]
+impl From<i32> for FileMode {
+    fn from(mode: i32) -> Self {
+        match mode {
+            raw::GIT_FILEMODE_UNREADABLE => FileMode::Unreadable,
+            raw::GIT_FILEMODE_TREE => FileMode::Tree,
+            raw::GIT_FILEMODE_BLOB => FileMode::Blob,
+            raw::GIT_FILEMODE_BLOB_EXECUTABLE => FileMode::BlobExecutable,
+            raw::GIT_FILEMODE_LINK => FileMode::Link,
+            raw::GIT_FILEMODE_COMMIT => FileMode::Commit,
+            mode => panic!("unknown file mode: {}", mode),
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
 impl From<u32> for FileMode {
     fn from(mode: u32) -> Self {
         match mode {
