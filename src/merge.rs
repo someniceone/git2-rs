@@ -345,7 +345,7 @@ impl<'a> MergeFileInput<'a> {
     /// File mode of the conflicted file, or `0` to not merge the mode.
     pub fn mode(&mut self, mode: Option<FileMode>) -> &mut MergeFileInput<'a> {
         if let Some(mode) = mode {
-            self.raw.mode = mode as u32;
+            self.raw.mode = mode.into();
         }
 
         self

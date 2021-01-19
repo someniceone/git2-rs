@@ -1052,10 +1052,14 @@ pub enum FileMode {
     Commit,
 }
 
-#[cfg(target_os = "windows")]
 impl From<i32> for FileMode {
     fn from(mode: i32) -> Self {
-        match mode {
+        #[cfg(target_env = "msvc")]
+        let m = mode as i32;
+        #[cfg(not(target_env = "msvc"))]
+        let m = mode as u32;
+
+        match m {
             raw::GIT_FILEMODE_UNREADABLE => FileMode::Unreadable,
             raw::GIT_FILEMODE_TREE => FileMode::Tree,
             raw::GIT_FILEMODE_BLOB => FileMode::Blob,
@@ -1067,10 +1071,14 @@ impl From<i32> for FileMode {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
 impl From<u32> for FileMode {
     fn from(mode: u32) -> Self {
-        match mode {
+        #[cfg(target_env = "msvc")]
+        let m = mode as i32;
+        #[cfg(not(target_env = "msvc"))]
+        let m = mode as u32;
+
+        match m {
             raw::GIT_FILEMODE_UNREADABLE => FileMode::Unreadable,
             raw::GIT_FILEMODE_TREE => FileMode::Tree,
             raw::GIT_FILEMODE_BLOB => FileMode::Blob,
@@ -1082,31 +1090,31 @@ impl From<u32> for FileMode {
     }
 }
 
-// #[cfg(target_os = "windows")]
 impl From<FileMode> for i32 {
     fn from(mode: FileMode) -> i32 {
-        match mode {
-            FileMode::Unreadable => raw::GIT_FILEMODE_UNREADABLE as i32,
-            FileMode::Tree => raw::GIT_FILEMODE_TREE as i32,
-            FileMode::Blob => raw::GIT_FILEMODE_BLOB as i32,
-            FileMode::BlobExecutable => raw::GIT_FILEMODE_BLOB_EXECUTABLE as i32,
-            FileMode::Link => raw::GIT_FILEMODE_LINK as i32,
-            FileMode::Commit => raw::GIT_FILEMODE_COMMIT as i32,
-        }
+        let m = match mode {
+            FileMode::Unreadable => raw::GIT_FILEMODE_UNREADABLE,
+            FileMode::Tree => raw::GIT_FILEMODE_TREE,
+            FileMode::Blob => raw::GIT_FILEMODE_BLOB,
+            FileMode::BlobExecutable => raw::GIT_FILEMODE_BLOB_EXECUTABLE,
+            FileMode::Link => raw::GIT_FILEMODE_LINK,
+            FileMode::Commit => raw::GIT_FILEMODE_COMMIT,
+        };
+        m as i32
     }
 }
 
-// #[cfg(not(target_os = "windows"))]
 impl From<FileMode> for u32 {
     fn from(mode: FileMode) -> u32 {
-        match mode {
-            FileMode::Unreadable => raw::GIT_FILEMODE_UNREADABLE as u32,
-            FileMode::Tree => raw::GIT_FILEMODE_TREE as u32,
-            FileMode::Blob => raw::GIT_FILEMODE_BLOB as u32,
-            FileMode::BlobExecutable => raw::GIT_FILEMODE_BLOB_EXECUTABLE as u32,
-            FileMode::Link => raw::GIT_FILEMODE_LINK as u32,
-            FileMode::Commit => raw::GIT_FILEMODE_COMMIT as u32,
-        }
+        let m = match mode {
+            FileMode::Unreadable => raw::GIT_FILEMODE_UNREADABLE,
+            FileMode::Tree => raw::GIT_FILEMODE_TREE,
+            FileMode::Blob => raw::GIT_FILEMODE_BLOB,
+            FileMode::BlobExecutable => raw::GIT_FILEMODE_BLOB_EXECUTABLE,
+            FileMode::Link => raw::GIT_FILEMODE_LINK,
+            FileMode::Commit => raw::GIT_FILEMODE_COMMIT,
+        };
+        m as u32
     }
 }
 
