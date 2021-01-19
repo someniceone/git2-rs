@@ -7,7 +7,6 @@ use crate::call::Convert;
 use crate::util::Binding;
 use crate::{raw, Commit, FileFavor, FileMode, IntoCString, Oid};
 use core::{ptr, slice};
-use std::convert::TryInto;
 use std::ffi::{CStr, CString};
 
 /// A structure to represent an annotated commit, the input to merge and rebase.
@@ -378,9 +377,9 @@ impl std::fmt::Debug for MergeFileInput<'_> {
         if let Some(path) = &self.path {
             ds.field("path", path);
         }
-        ds.field("mode", &FileMode::from(self.raw.mode.try_into().unwrap()));
+        ds.field("mode", &FileMode::from(self.raw.mode));
 
-        match FileMode::from(self.raw.mode.try_into().unwrap()) {
+        match FileMode::from(self.raw.mode) {
             FileMode::Unreadable => {}
             FileMode::Tree => {}
             FileMode::Blob => {
@@ -428,7 +427,7 @@ impl MergeFileResult {
 
     /// The mode that the resultant merge file should use.
     pub fn mode(&self) -> FileMode {
-        FileMode::from(self.raw.mode.try_into().unwrap())
+        FileMode::from(self.raw.mode)
     }
 
     /// The contents of the merge.

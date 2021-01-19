@@ -61,7 +61,7 @@
 //!
 //! ## Working with a `Repository`
 //!
-//! All deriviative objects, references, etc are attached to the lifetime of the
+//! All derivative objects, references, etc are attached to the lifetime of the
 //! source `Repository`, to ensure that they do not outlive the repository
 //! itself.
 
@@ -365,7 +365,7 @@ pub enum BranchType {
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum ConfigLevel {
     /// System-wide on Windows, for compatibility with portable git
-    ProgramData,
+    ProgramData = 1,
     /// System-wide configuration file, e.g. /etc/gitconfig
     System,
     /// XDG-compatible configuration file, e.g. ~/.config/git/config
@@ -377,7 +377,7 @@ pub enum ConfigLevel {
     /// Application specific configuration file
     App,
     /// Highest level available
-    Highest,
+    Highest = -1,
 }
 
 /// Merge file favor options for `MergeOptions` instruct the file-level
@@ -1052,10 +1052,9 @@ pub enum FileMode {
     Commit,
 }
 
-impl FileMode {
-    /// Convert u32 to FileMode
-    #[cfg(target_os = "windows")]
-    pub fn from(mode: i32) -> Self {
+#[cfg(target_os = "windows")]
+impl From<i32> for FileMode {
+    fn from(mode: i32) -> Self {
         match mode {
             raw::GIT_FILEMODE_UNREADABLE => FileMode::Unreadable,
             raw::GIT_FILEMODE_TREE => FileMode::Tree,
@@ -1066,10 +1065,11 @@ impl FileMode {
             mode => panic!("unknown file mode: {}", mode),
         }
     }
+}
 
-    /// Convert u32 to FileMode
-    #[cfg(not(target_os = "windows"))]
-    pub fn from(mode: u32) -> Self {
+#[cfg(not(target_os = "windows"))]
+impl From<u32> for FileMode {
+    fn from(mode: u32) -> Self {
         match mode {
             raw::GIT_FILEMODE_UNREADABLE => FileMode::Unreadable,
             raw::GIT_FILEMODE_TREE => FileMode::Tree,
@@ -1078,6 +1078,34 @@ impl FileMode {
             raw::GIT_FILEMODE_LINK => FileMode::Link,
             raw::GIT_FILEMODE_COMMIT => FileMode::Commit,
             mode => panic!("unknown file mode: {}", mode),
+        }
+    }
+}
+
+// #[cfg(target_os = "windows")]
+impl From<FileMode> for i32 {
+    fn from(mode: FileMode) -> i32 {
+        match mode {
+            FileMode::Unreadable => raw::GIT_FILEMODE_UNREADABLE as i32,
+            FileMode::Tree => raw::GIT_FILEMODE_TREE as i32,
+            FileMode::Blob => raw::GIT_FILEMODE_BLOB as i32,
+            FileMode::BlobExecutable => raw::GIT_FILEMODE_BLOB_EXECUTABLE as i32,
+            FileMode::Link => raw::GIT_FILEMODE_LINK as i32,
+            FileMode::Commit => raw::GIT_FILEMODE_COMMIT as i32,
+        }
+    }
+}
+
+// #[cfg(not(target_os = "windows"))]
+impl From<FileMode> for u32 {
+    fn from(mode: FileMode) -> u32 {
+        match mode {
+            FileMode::Unreadable => raw::GIT_FILEMODE_UNREADABLE as u32,
+            FileMode::Tree => raw::GIT_FILEMODE_TREE as u32,
+            FileMode::Blob => raw::GIT_FILEMODE_BLOB as u32,
+            FileMode::BlobExecutable => raw::GIT_FILEMODE_BLOB_EXECUTABLE as u32,
+            FileMode::Link => raw::GIT_FILEMODE_LINK as u32,
+            FileMode::Commit => raw::GIT_FILEMODE_COMMIT as u32,
         }
     }
 }
@@ -1474,12 +1502,20 @@ impl Default for ReferenceFormat {
 
 #[cfg(test)]
 mod tests {
-    use super::ObjectType;
+    use super::{FileMode, ObjectType};
 
     #[test]
     fn convert() {
         assert_eq!(ObjectType::Blob.str(), "blob");
         assert_eq!(ObjectType::from_str("blob"), Some(ObjectType::Blob));
         assert!(ObjectType::Blob.is_loose());
+    }
+
+    #[test]
+    fn convert_filemode() {
+        assert_eq!(i32::from(FileMode::Blob), 0o100644);
+        assert_eq!(i32::from(FileMode::BlobExecutable), 0o100755);
+        assert_eq!(u32::from(FileMode::Blob), 0o100644);
+        assert_eq!(u32::from(FileMode::BlobExecutable), 0o100755);
     }
 }

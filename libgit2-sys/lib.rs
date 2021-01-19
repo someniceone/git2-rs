@@ -458,6 +458,9 @@ pub struct git_cert_hostkey {
     pub hash_md5: [u8; 16],
     pub hash_sha1: [u8; 20],
     pub hash_sha256: [u8; 32],
+    pub raw_type: git_cert_ssh_raw_type_t,
+    pub hostkey: *const c_char,
+    pub hostkey_len: size_t,
 }
 
 #[repr(C)]
@@ -472,6 +475,15 @@ git_enum! {
         GIT_CERT_SSH_MD5 = 1 << 0,
         GIT_CERT_SSH_SHA1 = 1 << 1,
         GIT_CERT_SSH_SHA256 = 1 << 2,
+        GIT_CERT_SSH_RAW = 1 << 3,
+    }
+}
+
+git_enum! {
+    pub enum git_cert_ssh_raw_type_t {
+        GIT_CERT_SSH_RAW_TYPE_UNKNOWN = 0,
+        GIT_CERT_SSH_RAW_TYPE_RSA = 1,
+        GIT_CERT_SSH_RAW_TYPE_DSS = 2,
     }
 }
 
@@ -693,6 +705,21 @@ pub type git_treebuilder_filter_cb =
     Option<extern "C" fn(*const git_tree_entry, *mut c_void) -> c_int>;
 
 pub type git_revwalk_hide_cb = Option<extern "C" fn(*const git_oid, *mut c_void) -> c_int>;
+
+git_enum! {
+    pub enum git_tree_update_t {
+        GIT_TREE_UPDATE_UPSERT = 0,
+        GIT_TREE_UPDATE_REMOVE = 1,
+    }
+}
+
+#[repr(C)]
+pub struct git_tree_update {
+    pub action: git_tree_update_t,
+    pub id: git_oid,
+    pub filemode: git_filemode_t,
+    pub path: *const c_char,
+}
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -2121,6 +2148,7 @@ extern "C" {
         repo: *mut git_repository,
         url: *const c_char,
     ) -> c_int;
+    pub fn git_remote_create_detached(out: *mut *mut git_remote, url: *const c_char) -> c_int;
     pub fn git_remote_delete(repo: *mut git_repository, name: *const c_char) -> c_int;
     pub fn git_remote_free(remote: *mut git_remote);
     pub fn git_remote_name(remote: *const git_remote) -> *const c_char;
@@ -2608,6 +2636,13 @@ extern "C" {
         mode: git_treewalk_mode,
         callback: git_treewalk_cb,
         payload: *mut c_void,
+    ) -> c_int;
+    pub fn git_tree_create_updated(
+        out: *mut git_oid,
+        repo: *mut git_repository,
+        baseline: *mut git_tree,
+        nupdates: usize,
+        updates: *const git_tree_update,
     ) -> c_int;
 
     // treebuilder
@@ -3197,6 +3232,15 @@ extern "C" {
 
     // Not used?
     pub fn git_merge_file_result_free(result: *mut git_merge_file_result);
+
+    pub fn git_merge_analysis_for_ref(
+        analysis_out: *mut git_merge_analysis_t,
+        pref_out: *mut git_merge_preference_t,
+        repo: *mut git_repository,
+        git_reference: *mut git_reference,
+        their_heads: *mut *const git_annotated_commit,
+        their_heads_len: usize,
+    ) -> c_int;
 
     // notes
     pub fn git_note_author(note: *const git_note) -> *const git_signature;
