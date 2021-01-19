@@ -1067,8 +1067,7 @@ impl From<i32> for FileMode {
     }
 }
 
-// We can not use cfg like From<i32>
-// #[cfg(not(target_os = "windows"))]
+#[cfg(not(target_os = "windows"))]
 impl From<u32> for FileMode {
     fn from(mode: u32) -> Self {
         match mode {
