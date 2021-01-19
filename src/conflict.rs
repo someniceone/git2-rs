@@ -1,8 +1,6 @@
-
-
-use crate::util::{ Binding};
-use crate::{raw, MergeFileResult, IndexEntry};
-use libc::{ size_t};
+use crate::util::Binding;
+use crate::{raw, IndexEntry, MergeFileResult};
+use libc::size_t;
 
 pub struct Conflicts {
     raw: *mut raw::git_merge_conflicts,
@@ -19,7 +17,7 @@ pub struct MergeDiff {
     pub merge_result: MergeFileResult,
 }
 
-impl  Conflicts{
+impl Conflicts {
     pub fn len(&self) -> usize {
         unsafe { raw::git_merge_conflicts_count(&*self.raw) as usize }
     }
@@ -57,38 +55,44 @@ impl Binding for MergeDiff {
 
     unsafe fn from_raw(raw: raw::git_merge_diff) -> MergeDiff {
         let raw::git_merge_diff {
-            dtype, ancestor_entry, our_entry, our_status, their_entry, their_status, merge_result
+            dtype,
+            ancestor_entry,
+            our_entry,
+            our_status,
+            their_entry,
+            their_status,
+            merge_result,
         } = raw;
 
         let ancestor: Option<IndexEntry>;
-        if ancestor_entry.path.is_null(){
+        if ancestor_entry.path.is_null() {
             ancestor = None;
-        }else{
+        } else {
             ancestor = Some(Binding::from_raw(ancestor_entry));
         }
 
         let our: Option<IndexEntry>;
-        if our_entry.path.is_null(){
+        if our_entry.path.is_null() {
             our = None;
-        }else{
+        } else {
             our = Some(Binding::from_raw(our_entry));
         }
 
         let their: Option<IndexEntry>;
-        if their_entry.path.is_null(){
+        if their_entry.path.is_null() {
             their = None;
-        }else{
+        } else {
             their = Some(Binding::from_raw(their_entry));
         }
 
         MergeDiff {
             dtype: dtype,
-            ancestor_entry:ancestor,
+            ancestor_entry: ancestor,
             our_entry: our,
             our_status,
             their_entry: their,
             their_status,
-            merge_result: MergeFileResult::from_raw(merge_result)
+            merge_result: MergeFileResult::from_raw(merge_result),
         }
     }
 

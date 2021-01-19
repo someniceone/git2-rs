@@ -8,6 +8,7 @@ use std::ptr;
 use std::str;
 
 use crate::build::{CheckoutBuilder, RepoBuilder};
+use crate::conflict::Conflicts;
 use crate::diff::{
     binary_cb_c, file_cb_c, hunk_cb_c, line_cb_c, BinaryCb, DiffCallbacks, FileCb, HunkCb, LineCb,
 };
@@ -33,7 +34,6 @@ use crate::{Blob, BlobWriter, Branch, BranchType, Branches, Commit, Config, Inde
 use crate::{Describe, IntoCString, Reflog, RepositoryInitMode, RevparseMode};
 use crate::{DescribeOptions, Diff, DiffOptions, Odb, PackBuilder, TreeBuilder};
 use crate::{Note, Notes, ObjectType, Revwalk, Status, StatusOptions, Statuses, Tag};
-use crate::conflict::Conflicts;
 
 /// An owned git repository, representing all state associated with the
 /// underlying filesystem.
@@ -1951,7 +1951,7 @@ impl Repository {
         our_commit: &Commit<'_>,
         their_commit: &Commit<'_>,
         opts: Option<&MergeOptions>,
-    ) -> Result<(Index,Conflicts), Error> {
+    ) -> Result<(Index, Conflicts), Error> {
         let mut raw = ptr::null_mut();
         let mut conflicts = ptr::null_mut();
         unsafe {
@@ -3198,7 +3198,7 @@ mod tests {
     use crate::build::CheckoutBuilder;
     use crate::{CherrypickOptions, FileMode, MergeFileInput};
     use crate::{ObjectType, Oid, Repository, ResetType};
-    use std::ffi::{OsStr};
+    use std::ffi::OsStr;
     use std::fs;
     use std::io::Write;
     use std::path::Path;
@@ -3770,42 +3770,51 @@ mod tests {
         repo.set_head("refs/heads/branch_a").unwrap();
         repo.checkout_head(None).unwrap();
 
-        let result = repo.merge_commits_out_conflicts(&commit4, &commit5, None).unwrap();
+        let result = repo
+            .merge_commits_out_conflicts(&commit4, &commit5, None)
+            .unwrap();
 
         let conflicts = result.1;
-        assert_eq!(conflicts.len(),1);
+        assert_eq!(conflicts.len(), 1);
         let ret = conflicts.get(0);
         assert!(ret.is_some());
-        let merge_diff =ret.unwrap();
-        println!("ts:{},os:{},type:{}", merge_diff.their_status, merge_diff.our_status, merge_diff.dtype);
+        let merge_diff = ret.unwrap();
+        println!(
+            "ts:{},os:{},type:{}",
+            merge_diff.their_status, merge_diff.our_status, merge_diff.dtype
+        );
 
         let merge_result = merge_diff.merge_result;
         assert!(!merge_result.automergeable());
         unsafe {
-            let path= merge_result.path().unwrap();
-            let result_content =String::from_utf8(merge_result.content().expect("get merge result content failed")).expect("parse string failed");
+            let path = merge_result.path().unwrap();
+            let result_content = String::from_utf8(
+                merge_result
+                    .content()
+                    .expect("get merge result content failed"),
+            )
+            .expect("parse string failed");
             println!("path:{}\ncontent:{}", path, result_content);
-            assert_eq!(path,"file_a");
+            assert_eq!(path, "file_a");
             assert_eq!(result_content, merge_file_result_content);
         }
 
-
         let ancestor = merge_diff.ancestor_entry;
-        let their =merge_diff.their_entry;
+        let their = merge_diff.their_entry;
         let our = merge_diff.our_entry;
 
         assert!(ancestor.is_none());
         assert!(our.is_some());
         assert!(their.is_some());
 
-        let our_path=String::from_utf8(our.unwrap().path).unwrap();
+        let our_path = String::from_utf8(our.unwrap().path).unwrap();
         let their_path = String::from_utf8(their.unwrap().path).unwrap();
 
-        println!("our_path:{}",our_path);
-        println!("their_path:{}",their_path);
+        println!("our_path:{}", our_path);
+        println!("their_path:{}", their_path);
 
-        assert_eq!(our_path,"file_a");
-        assert_eq!(their_path,"file_a");
+        assert_eq!(our_path, "file_a");
+        assert_eq!(their_path, "file_a");
 
         drop(conflicts);
     }
