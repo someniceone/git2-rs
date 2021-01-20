@@ -3781,7 +3781,7 @@ mod tests {
         let merge_diff = ret.unwrap();
         println!(
             "ts:{},os:{},type:{}",
-            merge_diff.their_status, merge_diff.our_status, merge_diff.dtype
+            merge_diff.their_status, merge_diff.our_status, merge_diff.merge_diff_type
         );
 
         let merge_result = merge_diff.merge_result;

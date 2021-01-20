@@ -812,7 +812,7 @@ pub struct git_index_entry {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct git_merge_diff {
-    pub dtype: git_merge_diff_t,
+    pub merge_diff_type: git_merge_diff_t,
     pub ancestor_entry: git_index_entry,
     pub our_entry: git_index_entry,
     pub our_status: git_delta_t,

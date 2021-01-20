@@ -8,7 +8,7 @@ pub struct Conflicts {
 
 #[allow(missing_docs)]
 pub struct MergeDiff {
-    pub dtype: raw::git_merge_diff_t,
+    pub merge_diff_type: raw::git_merge_diff_t,
     pub ancestor_entry: Option<IndexEntry>,
     pub our_entry: Option<IndexEntry>,
     pub our_status: raw::git_delta_t,
@@ -55,7 +55,7 @@ impl Binding for MergeDiff {
 
     unsafe fn from_raw(raw: raw::git_merge_diff) -> MergeDiff {
         let raw::git_merge_diff {
-            dtype,
+            merge_diff_type,
             ancestor_entry,
             our_entry,
             our_status,
@@ -86,7 +86,7 @@ impl Binding for MergeDiff {
         }
 
         MergeDiff {
-            dtype: dtype,
+            merge_diff_type: merge_diff_type,
             ancestor_entry: ancestor,
             our_entry: our,
             our_status,
